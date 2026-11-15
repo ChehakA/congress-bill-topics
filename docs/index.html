@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Congress Bill Topics</title>
+<meta name="description" content="An interactive map of what bills in the U.S. Congress are about, grouped by topic.">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #fbfaf7; --panel: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --line: #e4e1da; --accent: #2f5d8a; --chip: #f1eee8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141518; --panel: #1c1d21; --text: #ececee; --muted: #9a9aa2;
+            --line: #2c2d33; --accent: #8ab4e0; --chip: #26272c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { max-width: 1200px; margin: 0 auto; padding: 32px 16px 8px; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0; max-width: 760px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid;
+         grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  #map { height: 640px; }
+  @media (max-width: 860px) { #map { height: 460px; } }
+  aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  aside .card { padding: 14px; }
+  label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  input { width: 100%; margin-top: 6px; padding: 9px 10px; border-radius: 8px;
+          border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+  #count { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  #legend { max-height: 420px; overflow-y: auto; margin: 6px -4px 0; }
+  .lg { display: flex; gap: 8px; align-items: flex-start; padding: 6px 4px; border-radius: 6px;
+        cursor: pointer; font-size: 13px; }
+  .lg:hover { background: var(--chip); }
+  .lg.off { opacity: .35; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; margin-top: 5px; }
+  .lg small { display: block; color: var(--muted); }
+  .btns { display: flex; gap: 8px; margin-top: 8px; }
+  button { flex: 1; padding: 6px; border: 1px solid var(--line); background: var(--chip);
+           color: var(--text); border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
+  #empty { padding: 40px 24px; text-align: center; color: var(--muted); }
+  #empty code { background: var(--chip); padding: 2px 6px; border-radius: 4px; }
+  section.about { max-width: 1200px; margin: 0 auto; padding: 8px 16px 40px; color: var(--muted); font-size: 14px; }
+  section.about h2 { font-size: 16px; color: var(--text); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>What is Congress working on?</h1>
+  <p class="sub" id="subtitle">Every dot is a bill. Bills with similar wording sit close together and share a color.
+    Hover to read a bill, click to open it on Congress.gov.</p>
+</header>
+
+<main>
+  <div class="card" id="map"><div id="empty">Loading map…</div></div>
+  <aside>
+    <div class="card">
+      <label for="q">Find a sponsor or keyword</label>
+      <input id="q" type="search" placeholder="e.g. a member's last name, or “veterans”">
+      <div id="count"></div>
+    </div>
+    <div class="card">
+      <label>Topics</label>
+      <div class="btns"><button id="all">Show all</button><button id="none">Hide all</button></div>
+      <div id="legend"></div>
+    </div>
+  </aside>
+</main>
+
+<section class="about">
+  <h2>How this was made</h2>
+  <p>Bill titles and Congressional Research Service summaries come from the official
+    <a href="https://www.govinfo.gov/bulkdata/BILLSTATUS">GovInfo Bill Status bulk data</a>.
+    Text was turned into TF-IDF vectors and grouped with K-Means; topic names were assigned by hand after reading each group.
+    The 2D layout uses t-SNE, so distances between far-apart groups are not meaningful.
+    This map describes what bills are about. It does not rate or rank any member of Congress.</p>
+  <p id="generated"></p>
+</section>
+
+<script>
+const ORD = n => n + (["th","st","nd","rd"][(n % 100 - 20) % 10] || ["th","st","nd","rd"][n % 100] || "th");
+const TYPES = { hr: "house-bill", s: "senate-bill", hjres: "house-joint-resolution", sjres: "senate-joint-resolution",
+                hres: "house-resolution", sres: "senate-resolution", hconres: "house-concurrent-resolution",
+                sconres: "senate-concurrent-resolution" };
+const billUrl = id => { const [c, t, n] = id.split("-");
+  return `https://www.congress.gov/bill/${ORD(+c)}-congress/${TYPES[t] || t}/${n}`; };
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+const wrap = (s, w = 60) => esc(s).replace(new RegExp(`(.{1,${w}})(\\s|$)`, "g"), "$1<br>");
+const color = (i, k) => `hsl(${Math.round((i * 360 / k + (i % 2) * 180 / k) % 360)}, 62%, ${i % 3 === 0 ? 45 : i % 3 === 1 ? 55 : 38}%)`;
+
+let bills = [], clusters = [], hidden = new Set(), query = "";
+
+function draw() {
+  const q = query.toLowerCase();
+  const traces = clusters.map(c => {
+    const pts = bills.filter(b => b.cluster === c.id && !hidden.has(c.id) &&
+      (!q || b.sponsor.toLowerCase().includes(q) || b.title.toLowerCase().includes(q)));
+    return {
+      type: "scattergl", mode: "markers", name: c.name, showlegend: false,
+      x: pts.map(b => b.x), y: pts.map(b => b.y), customdata: pts.map(b => b.bill_id),
+      text: pts.map(b => `<b>${esc(b.bill_id.toUpperCase())}</b> · ${esc(c.name)}<br>${wrap(b.title)}` +
+                         `<span style="color:#888">${esc(b.sponsor)}${b.policy_area ? " · " + esc(b.policy_area) : ""}</span>`),
+      hovertemplate: "%{text}<extra></extra>",
+      marker: { size: q ? 7 : 4, opacity: q ? 0.95 : 0.7, color: color(c.id, clusters.length) },
+      _n: pts.length,
+    };
+  });
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const axis = { visible: false };
+  Plotly.react("map", traces, {
+    margin: { l: 0, r: 0, t: 0, b: 0 }, xaxis: axis, yaxis: axis, dragmode: "pan",
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", hovermode: "closest",
+    hoverlabel: { bgcolor: dark ? "#26272c" : "#fff", bordercolor: dark ? "#444" : "#ddd",
+                  font: { color: dark ? "#eee" : "#222", size: 12 } },
+  }, { responsive: true, displaylogo: false, scrollZoom: true, modeBarButtonsToRemove: ["select2d", "lasso2d"] });
+  const shown = traces.reduce((a, t) => a + t._n, 0);
+  document.getElementById("count").textContent = `${shown.toLocaleString()} of ${bills.length.toLocaleString()} bills shown`;
+}
+
+function legend() {
+  const el = document.getElementById("legend");
+  el.innerHTML = clusters.slice().sort((a, b) => b.size - a.size).map(c =>
+    `<div class="lg${hidden.has(c.id) ? " off" : ""}" data-id="${c.id}">
+       <span class="dot" style="background:${color(c.id, clusters.length)}"></span>
+       <span>${esc(c.name)} <small>${c.size.toLocaleString()} bills · ${esc(c.top_words.slice(0, 4).join(", "))}</small></span>
+     </div>`).join("");
+  el.querySelectorAll(".lg").forEach(d => d.onclick = () => {
+    const id = +d.dataset.id; hidden.has(id) ? hidden.delete(id) : hidden.add(id); legend(); draw(); });
+}
+
+async function init() {
+  try {
+    const [cr, br] = await Promise.all([fetch("data/clusters.json"), fetch("data/bills.json")]);
+    if (!cr.ok || !br.ok) throw new Error("missing");
+    const cj = await cr.json(), bj = await br.json();
+    clusters = cj.clusters;
+    bills = bj.rows.map(r => Object.fromEntries(bj.fields.map((f, i) => [f, r[i]])));
+    document.getElementById("map").innerHTML = "";
+    document.getElementById("subtitle").innerHTML =
+      `${bills.length.toLocaleString()} bills from the ${ORD(cj.congress)} Congress, grouped into ${clusters.length} topics. ` +
+      "Every dot is a bill; similar bills sit close together. Hover to read one, click to open it on Congress.gov.";
+    document.getElementById("generated").textContent = `Data generated ${cj.generated}.`;
+    legend(); draw();
+    document.getElementById("map").on("plotly_click", e => {
+      const id = e.points[0] && e.points[0].customdata; if (id) window.open(billUrl(id), "_blank", "noopener"); });
+  } catch (e) {
+    document.getElementById("empty").innerHTML =
+      "No map data yet. Run the notebook through step 9, then commit <code>docs/data/bills.json</code> and <code>docs/data/clusters.json</code>.";
+  }
+}
+
+let t; document.getElementById("q").oninput = e => { clearTimeout(t); t = setTimeout(() => { query = e.target.value.trim(); draw(); }, 200); };
+document.getElementById("all").onclick = () => { hidden.clear(); legend(); draw(); };
+document.getElementById("none").onclick = () => { clusters.forEach(c => hidden.add(c.id)); legend(); draw(); };
+init();
+</script>
+</body>
+</html>
