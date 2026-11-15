@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings | Congress Bill Topics</title>
+<meta name="description" content="Research findings from topic clustering of bills in the 119th Congress.">
+<style>
+  :root { --bg: #fbfaf7; --text: #1d1d1f; --muted: #6b6b70; --line: #e4e1da; --accent: #2f5d8a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141518; --text: #ececee; --muted: #9a9aa2; --line: #2c2d33; --accent: #8ab4e0; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header, main { max-width: 900px; margin: 0 auto; padding: 24px; }
+  header { padding-top: 40px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 19px; margin: 30px 0 8px; }
+  p, li { max-width: 760px; }
+  .muted, .status { color: var(--muted); }
+  .status { border-left: 3px solid var(--accent); padding-left: 12px; }
+  a { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; }
+  th, td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: 10px 8px; }
+  th { font-size: 13px; }
+  @media (max-width: 600px) {
+    header, main { padding: 18px; }
+    table { font-size: 14px; }
+    th, td { padding: 8px 5px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p><a href="index.html">← Topic map</a></p>
+  <h1>Findings</h1>
+  <p class="muted">Topic clustering of bills in the 119th Congress</p>
+  <p class="status">The notebook has not been run in this repository yet. Replace the prompts below with measured results and evidence after running the analysis.</p>
+</header>
+<main>
+  <section>
+    <h2>Main takeaway</h2>
+    <p><em>Summarize the strongest pattern in one to three sentences. Name the evidence that supports it.</em></p>
+  </section>
+  <section>
+    <h2>Model checks</h2>
+    <table>
+      <tbody>
+        <tr><th scope="row">Bills analyzed</th><td>Record the count with usable CRS summaries.</td></tr>
+        <tr><th scope="row">Clusters</th><td>Record the selected value of K and why it was chosen.</td></tr>
+        <tr><th scope="row">Silhouette score</th><td>Record the score and what it suggests about separation.</td></tr>
+        <tr><th scope="row">Adjusted Rand Index</th><td>Record the comparison with official policy areas.</td></tr>
+        <tr><th scope="row">Normalized Mutual Information</th><td>Record the comparison with official policy areas.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Topics worth discussing</h2>
+    <p>For each selected cluster, include its hand-reviewed name, top terms, example bill titles, and why the grouping matters. Note where one official policy area splits across multiple clusters or where different policy areas share a cluster.</p>
+  </section>
+  <section>
+    <h2>Interpretation and limitations</h2>
+    <p>Explain what the model can and cannot show. The map uses t-SNE for visualization; distances between distant groups are not meaningful. Cluster labels are human interpretations, and bills without CRS summaries are excluded from the clustering.</p>
+  </section>
+  <section>
+    <h2>Sources</h2>
+    <p>Bill records and CRS summaries: <a href="https://www.govinfo.gov/bulkdata/BILLSTATUS">GovInfo Bill Status bulk data</a>. Method and reproducible analysis: <a href="https://github.com/ChehakA/congress-bill-topics/blob/main/congress_bill_clusters.ipynb">notebook</a>.</p>
+  </section>
+</main>
+</body>
+</html>
