@@ -35,32 +35,36 @@
   <p><a href="index.html">← Topic map</a></p>
   <h1>Findings</h1>
   <p class="muted">Topic clustering of bills in the 119th Congress</p>
-  <p class="status">The notebook has not been run in this repository yet. Replace the prompts below with measured results and evidence after running the analysis.</p>
+  <p class="status">Analysis run on 2026-11-15 using GovInfo bill-status data. Results below cover bills with sufficiently long CRS summaries.</p>
 </header>
 <main>
   <section>
     <h2>Main takeaway</h2>
-    <p><em>Summarize the strongest pattern in one to three sentences. Name the evidence that supports it.</em></p>
+    <p>The model recovers several interpretable subtopics, including veterans benefits, tax policy, health coverage, and firearms. But overall cluster separation is weak, and the clusters only partly match official policy areas. Treat the map as an exploratory index of bill language, not a definitive taxonomy.</p>
   </section>
   <section>
     <h2>Model checks</h2>
     <table>
       <tbody>
-        <tr><th scope="row">Bills analyzed</th><td>Record the count with usable CRS summaries.</td></tr>
-        <tr><th scope="row">Clusters</th><td>Record the selected value of K and why it was chosen.</td></tr>
-        <tr><th scope="row">Silhouette score</th><td>Record the score and what it suggests about separation.</td></tr>
-        <tr><th scope="row">Adjusted Rand Index</th><td>Record the comparison with official policy areas.</td></tr>
-        <tr><th scope="row">Normalized Mutual Information</th><td>Record the comparison with official policy areas.</td></tr>
+        <tr><th scope="row">Bills analyzed</th><td>4,184 bills with CRS summaries longer than 100 characters; 16,732 bills were parsed in total.</td></tr>
+        <tr><th scope="row">Clusters</th><td>30, selected because it scored highest among the tested values from 10 to 40.</td></tr>
+        <tr><th scope="row">Best cosine silhouette</th><td>0.0419 at k = 30. This is low, indicating substantial overlap rather than sharply separated groups.</td></tr>
+        <tr><th scope="row">Adjusted Rand Index</th><td>0.257 against official policy areas, indicating partial but far from exact agreement.</td></tr>
+        <tr><th scope="row">Normalized Mutual Information</th><td>0.52 against official policy areas, showing a meaningful association but not a one-to-one mapping.</td></tr>
       </tbody>
     </table>
   </section>
   <section>
     <h2>Topics worth discussing</h2>
-    <p>For each selected cluster, include its hand-reviewed name, top terms, example bill titles, and why the grouping matters. Note where one official policy area splits across multiple clusters or where different policy areas share a cluster.</p>
+    <ul>
+      <li><strong>Specialized groups align well:</strong> 199 of 205 bills in the veterans-benefits cluster (cluster 5) carry the official Armed Forces and National Security label. The tax cluster (17) contains 190 of 206 Taxation bills.</li>
+      <li><strong>Broad policy areas split into subtopics:</strong> Education appears in school-focused and higher-education clusters (21 and 29). Crime and law-enforcement bills split into general offenses (15), firearms (8), and enforcement (23). Health also separates into coverage, Medicare, prescription-drug, and mental-health groups.</li>
+      <li><strong>Some groups remain mixed:</strong> the largest cluster (2, with 663 bills) has Health as its most common official label, but includes many other policy areas. Its broad top terms and mixed bill examples make it a poor single-topic label.</li>
+    </ul>
   </section>
   <section>
     <h2>Interpretation and limitations</h2>
-    <p>Explain what the model can and cannot show. The map uses t-SNE for visualization; distances between distant groups are not meaningful. Cluster labels are human interpretations, and bills without CRS summaries are excluded from the clustering.</p>
+    <p>This answers a descriptive question—what recurring language appears in bill titles and CRS summaries—not whether the bills pass, work, or improve outcomes. TF-IDF emphasizes repeated words, K-Means forces every bill into one of 30 groups, and the low silhouette score warns that many bills sit between topics. The t-SNE map is only a visualization; distances between distant groups are not meaningful. Bills without a sufficiently long CRS summary are excluded.</p>
   </section>
   <section>
     <h2>Sources</h2>
