@@ -13,7 +13,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
   header, main { max-width: 900px; margin: 0 auto; padding: 24px; }
-  header { padding-top: 40px; }
+  header { padding-top: 40px; padding-bottom: 0; }
+  main { padding-top: 0; padding-bottom: 48px; }
   h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
   h2 { font-size: 19px; margin: 30px 0 8px; }
   p, li { max-width: 760px; }
@@ -22,7 +23,8 @@
   a { color: var(--accent); }
   table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; }
   th, td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: 10px 8px; }
-  th { font-size: 13px; }
+  th { font-size: 14px; font-weight: 600; width: 30%; }
+  section:first-child h2 { margin-top: 20px; }
   @media (max-width: 600px) {
     header, main { padding: 18px; }
     table { font-size: 14px; }

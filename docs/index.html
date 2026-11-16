@@ -23,9 +23,9 @@
   .sub { color: var(--muted); margin: 0; max-width: 760px; }
   main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid;
          grid-template-columns: 1fr 300px; gap: 16px; }
-  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
-  #map { height: 640px; }
+  #map { height: 640px; min-width: 0; overflow: hidden; }
   @media (max-width: 860px) { #map { height: 460px; } }
   aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   aside .card { padding: 14px; }
@@ -103,7 +103,7 @@ function draw() {
     const pts = bills.filter(b => b.cluster === c.id && !hidden.has(c.id) &&
       (!q || b.sponsor.toLowerCase().includes(q) || b.title.toLowerCase().includes(q)));
     return {
-      type: "scattergl", mode: "markers", name: c.name, showlegend: false,
+      type: "scatter", mode: "markers", name: c.name, showlegend: false,
       x: pts.map(b => b.x), y: pts.map(b => b.y), customdata: pts.map(b => b.bill_id),
       text: pts.map(b => `<b>${esc(b.bill_id.toUpperCase())}</b> · ${esc(c.name)}<br>${wrap(b.title)}` +
                          `<span style="color:#888">${esc(b.sponsor)}${b.policy_area ? " · " + esc(b.policy_area) : ""}</span>`),
